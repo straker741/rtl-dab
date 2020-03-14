@@ -14,8 +14,12 @@ You should have received a copy of the GNU General Public License
 along with rtl-dab.  If not, see <http://www.gnu.org/licenses/>.
 
 
+Autor:
 david may 2012
 david.may.muc@googlemail.com
+
+Contributor:
+Jakub Svajka 2020
 
 */
 
@@ -147,160 +151,214 @@ struct ServiceList * appendService(struct ServiceList *sl,uint8_t *fig,uint32_t 
   
   return new;
 
-  
-  
-
 }
 
-uint8_t dab_fig_type_0(uint8_t * fig,Ensemble * ens, uint32_t length){
-  uint8_t extension = fig[0] & 0x1F;
-  //fprintf(stderr,"ext: %u\n",extension);
-  //fprintf(stderr,"OE: %u\n",(fig[0] >> 6) & 0x01);
-  /* Basic sub-channel organization */
-  uint32_t idx=1;
-  if (extension == 0){
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-	
-  }
-  else if (extension == 1){
-    while (idx<(length-1)){
-      ens->sco = appendSubchannel(ens->sco,&fig[idx],fig[idx]>>2);	
-      if (fig[idx+2] >> 7)
-	idx += 4;
-      else
-	idx += 3;
-      //fprintf(stderr,"%u %u %u\n",idx,length-1,fig[idx]>>2);
-    }
-  }
-  else if (extension == 2) {
-    //fprintf(stderr,"P/D %u \n",(fig[0] >> 5) & 0x01);
-    uint32_t sr=0;
-    while (idx<length) {
-      if (!((fig[0] >> 5) & 0x01)){
-	sr = ((uint16_t)fig[idx] & 0x0F) + (uint8_t)fig[idx+1];
-	ens->sl = appendService(ens->sl,&fig[idx],sr,0);
-	idx = idx + (3+(fig[idx+2] & 0x0F)*2);
-      } else {
-	sr = (((uint32_t)fig[idx+1] & 0x0F) << 16) 
-	  + ((uint32_t)fig[idx+2] << 8)  
-	  + (uint32_t)fig[idx+3];
-	ens->sl = appendService(ens->sl,&fig[idx],sr,1);
-	idx = idx + (5+(fig[idx+4] & 0x0F)*2);
-      }
-      //fprintf(stderr,"%u %u\n",idx,length);
-    }
-  }
-  /* Service Component in Packet Mode */
-  else if (extension == 3) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-    /*
-     while(idx < length) {
-    fprintf(stderr,"%u %u\n",((uint16_t)fig[idx] << 4) + (fig[idx+1] >> 4),fig[idx+4] >> 2);
-    fprintf(stderr,"%INFO: %X %X %X %X\n",fig[idx],fig[idx+1],fig[idx+2],fig[idx+3]);
-    // if not DG flag... 
-    idx += 5;
-    }
-    */
-  }
-  else if (extension == 4) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);	
-    //fprintf(stderr,"SCs with CA\n");
-	
-  }
-  /* Service Component Language */
-  else if (extension == 5) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
+uint8_t dab_fig_type_0(uint8_t *fig, Ensemble *ens, uint32_t length){
+    // First 3 bits are:  C/N  |  OE  |  P/D  
+    // Following 5 bits correspond to extension
+    uint8_t extension = fig[0] & 0x1F;
+    //fprintf(stderr,"ext: %u\n",extension);
+    //fprintf(stderr,"OE: %u\n",(fig[0] >> 6) & 0x01);
     
-  }
+    uint32_t idx=1;
+    /* --- Ensemble information --- */
+    if (extension == 0) {
+        // Note: it is not the same as Ensemble label
+        //fprintf(stderr,"FIG 0/%u\n",extension);
 
-  /* Service Linking Info */
-  else if (extension == 6) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-    
-  }
-
-  else if (extension == 8) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-
-    //fprintf(stderr,"%X %X %X %X\n",fig[1],fig[2],fig[3],fig[4]);
-    /*
-    uint32_t sr=0;
-    uint16_t sc=0;
-    if (!((fig[0] >> 5) & 0x01)){
-      sr = ((uint16_t)fig[idx] << 8) + (uint8_t)fig[idx+1];
-      if(!(fig[idx+3] >> 7))
-	 sc = fig[idx+3] & 0x1f;
-    } else {
-      sr = (((uint32_t)fig[idx]) << 24) 
-	+ ((uint32_t)fig[idx+1] << 16)  
-	+ ((uint32_t)fig[idx+2] << 8)
-	+ fig[idx+3];
-      if((fig[idx+5] >> 7))
-	sc = fig[idx+6];
     }
-    fprintf(stderr,"%X %u \n",sr,sc);
-    */
-  }
-
-  /* Country LTO */
-  else if (extension == 9) {
-  }
-
-  /* Date & Time */
-  else if (extension == 10) {
-  }
-
-  /* Region Definition */
-  else if (extension == 11) {
-  }
-
-  /* User Application Information */
-  else if (extension == 13) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-
-  }
-  /* FEC Subchannel Organization */
-  else if (extension == 14) {
-    //fprintf(stderr,"FIG 0/%u\n",extension);
-    
-    //fprintf(stderr,"FEC Subchannel Organization\n");
-    /*
-    while(idx < length) {
-      fprintf(stderr,"FEC SubChId: %u Scheme: %u \n",fig[idx]>>2,fig[idx] & 0x02);
-      idx++;
+    /* --- Basic sub-channel organization --- */
+    else if (extension == 1) {
+        while (idx<(length-1)) {
+            ens->sco = appendSubchannel(ens->sco, &fig[idx], fig[idx]>>2);	
+            if (fig[idx+2] >> 7)
+                idx += 4;
+            else
+                idx += 3;
+            //fprintf(stderr,"%u %u %u\n",idx,length-1,fig[idx]>>2);
+        }
     }
-    */
-  }
-  /* Program Type PTy */
-  else if (extension == 17) {
+    /* --- Service organization --- */
+    else if (extension == 2) {
+        // https://www.etsi.org/deliver/etsi_en/300400_300499/300401/02.01.01_20/en_300401v020101a.pdf
+        // page: 45
+        //fprintf(stderr,"P/D %u \n",(fig[0] >> 5) & 0x01);
+        uint32_t sr=0;
+        while (idx<length) {
+            if (!((fig[0] >> 5) & 0x01)) {
+                sr = ((uint16_t)fig[idx] & 0x0F) + (uint8_t)fig[idx+1];
+                ens->sl = appendService(ens->sl,&fig[idx],sr,0);
+                idx = idx + (3+(fig[idx+2] & 0x0F)*2);
+            }
+            else {
+                sr = (((uint32_t)fig[idx+1] & 0x0F) << 16) 
+                + ((uint32_t)fig[idx+2] << 8)  
+                + (uint32_t)fig[idx+3];
+                ens->sl = appendService(ens->sl,&fig[idx],sr,1);
+                idx = idx + (5+(fig[idx+4] & 0x0F)*2);
+            }
+            //fprintf(stderr,"%u %u\n",idx,length);
+        }
+    }
+    /* Service Component in Packet Mode */
+    else if (extension == 3) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+        /*
+        while(idx < length) {
+            fprintf(stderr,"%u %u\n",((uint16_t)fig[idx] << 4) + (fig[idx+1] >> 4),fig[idx+4] >> 2);
+            fprintf(stderr,"%INFO: %X %X %X %X\n",fig[idx],fig[idx+1],fig[idx+2],fig[idx+3]);
+            // if not DG flag... 
+            idx += 5;
+        }
+        */
+    }
+    else if (extension == 4) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);	
+        //fprintf(stderr,"SCs with CA\n");
+
+    }
+    /* Service Component Language */
+    else if (extension == 5) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+
+    }
+    /* Service Linking Info */
+    else if (extension == 6) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+
+    }
+    else if (extension == 8) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+
+        //fprintf(stderr,"%X %X %X %X\n",fig[1],fig[2],fig[3],fig[4]);
+        /*
+        uint32_t sr=0;
+        uint16_t sc=0;
+        if (!((fig[0] >> 5) & 0x01)){
+            sr = ((uint16_t)fig[idx] << 8) + (uint8_t)fig[idx+1];
+            if(!(fig[idx+3] >> 7))
+                sc = fig[idx+3] & 0x1f;
+        }
+        else {
+            sr = (((uint32_t)fig[idx]) << 24) 
+            + ((uint32_t)fig[idx+1] << 16)  
+            + ((uint32_t)fig[idx+2] << 8)
+            + fig[idx+3];
+            if((fig[idx+5] >> 7))
+                sc = fig[idx+6];
+        }
+        fprintf(stderr,"%X %u \n",sr,sc);
+        */
+    }
+    /* Country LTO */
+    else if (extension == 9) {
+    }
+    /* Date & Time */
+    else if (extension == 10) {
+        // The date and time feature is used to signal a location-independent timing reference in UTC format.
+        // 1 bit    |   17 bits |   1 bit   |   1 bit   |   1 bit   |   11 or 27 bits
+        // Rfu      |   MJD     |   LSI     |   Rfa     |   UTC flag|   UTC
+        // UTC flag: this 1-bit field shall indicate whether the UTC (see below) takes the short form or the long form (0-short)
+        // First 20 bits are pretty much useless for me
+        uint8_t UTCflag = (fig[3] & 0x08)>>3;            // 4 bits in front are useless and 3 bits of UTC
+        if (UTCflag) {
+            // 1 == long form
+            //  5 bits  |   6 bits  |   6 bits  |   10 bits
+            //  hours   |   minutes |   seconds |   miliseconds
+            ens->dt->hours = (uint8_t)((fig[3] & 0x07)<<5) + (uint8_t)((fig[4] & 0xC0)>>6);
+            ens->dt->minutes = (fig[4] & 0x3F);
+            ens->dt->seconds = (fig[5] & 0xFC)>>2;
+            ens->dt->miliseconds = (((uint16_t)(fig[5] & 0x03))<<8) + (uint8_t)fig[6];
+        }
+        else {
+            ens->dt->hours = ((fig[3] & 0x07)<<5) + ((fig[4] & 0xC0)>>6);
+            ens->dt->minutes = (fig[4] & 0x3F);
+            ens->dt->seconds = 0x00;
+            ens->dt->miliseconds = 0x00;
+        }
+        fprintf(stderr,"datetime: %X | %X | %X | %X\n", ens->dt->hours, ens->dt->minutes, ens->dt->seconds, ens->dt->miliseconds);
+    }
+    /* Region Definition */
+    else if (extension == 11) {
+    }
+    /* User Application Information */
+    else if (extension == 13) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+    }
+    /* FEC Subchannel Organization */
+    else if (extension == 14) {
+        //fprintf(stderr,"FIG 0/%u\n",extension);
+
+        //fprintf(stderr,"FEC Subchannel Organization\n");
+        /*
+        while(idx < length) {
+            fprintf(stderr,"FEC SubChId: %u Scheme: %u \n",fig[idx]>>2,fig[idx] & 0x02);
+            idx++;
+        }
+        */
+    }
+    /* Program Type PTy */
+    else if (extension == 17) {
     //fprintf(stderr,"FIG 0/%u\n",extension);
-    
-  }
-
-  /* Anouncment */
-  else if (extension == 18) {
+    }
+    /* Anouncment */
+    else if (extension == 18) {
     //fprintf(stderr,"FIG 0/%u\n",extension);
-  }
-
-  /* Anouncment Switching */
-  else if (extension == 19) {
+    }
+    /* Anouncment Switching */
+    else if (extension == 19) {
     //fprintf(stderr,"FIG 0/%u\n",extension);
-  }
-
-  /* DRM Freqs */
-  else if (extension == 21) {
-  }
-
-  /* TII */
-  else if (extension == 22) {
-  }
-
-  /* OE Services */
-  else if (extension == 24) {
-  }
-  else {
-    fprintf(stderr,"FIG 0/%u\n",extension);
-    
-  }
-  return 0;
+    }
+    /* DRM Freqs */
+    else if (extension == 21) {
+    }
+    /* TII */
+    else if (extension == 22) {
+    }
+    /* OE Services */
+    else if (extension == 24) {
+    }
+    else {
+        fprintf(stderr,"FIG 0/%u\n",extension);
+    }
+    return 0;
 }
+
+/*
+Summary of type 0 FIGs
+FIG type/ext    Clause      Description                                 MCI/SI      Type 0 flags
+                                                                                    C/N     OE      P/D
+_______________________________________________________________________________________________________
+FIG 0/0         6.4.1       Ensemble information                        MCI         Rfu     Rfu     Rfu
+FIG 0/1         6.2.1       Sub-channel organization                    MCI         MCI     Rfu     Rfu
+FIG 0/2         6.3.1       Service organization                        MCI         MCI     Rfu     P/D
+FIG 0/3         6.3.2       Service component in packet mode            MCI         MCI     Rfu     Rfu
+FIG 0/4         6.3.3       Service component with CA in stream mode    MCI         MCI     Rfu     Rfu
+FIG 0/5         8.1.2       Service component language                  SI          Rfu     Rfu     Rfu
+FIG 0/6         8.1.15      Service linking information                 SI          SIV     Rfu     P/D
+FIG 0/7         6.4.2       Configuration information                   MCI         MCI     Rfu     Rfu 
+FIG 0/8         6.3.5       Service component global definition         MCI         MCI     Rfu     P/D 
+FIG 0/9         8.1.3.2     Country, LTO & International table          SI          Rfu     Rfu     Rfu 
+FIG 0/10        8.1.3.1     Date & time                                 SI          Rfu     Rfu     Rfu 
+FIG 0/11                    - 
+FIG 0/12                    - 
+FIG 0/13        6.3.6       User Application information                MCI         MCI     Rfu     P/D 
+FIG 0/14        6.2.2       FEC sub-channel organization                MCI         MCI     Rfu     Rfu 
+FIG 0/15                    - 
+FIG 0/16                    - 
+FIG 0/17        8.1.5       Programme Type (PTy)                        SI          Rfu     Rfu     Rfu 
+FIG 0/18        8.1.6.1     Announcement support                        SI          Rfu     Rfu     Rfu 
+FIG 0/19        8.1.6.2     Announcement switching                      SI          Rfu     Rfu     Rfu 
+FIG 0/20        8.1.4       Service component information               SI          Rfu     Rfu     P/D 
+FIG 0/21        8.1.8       Frequency information (FI)                  SI          SIV     OE      Rfu 
+FIG 0/22                    - 
+FIG 0/23                    - 
+FIG 0/24        8.1.10      OE services                                 SI          SIV     OE      P/D 
+FIG 0/25        8.1.6.3     OE Announcement support                     SI          Rfu     Rfu     Rfu 
+FIG 0/26        8.1.6.4     OE Announcement switching                   SI          Rfu     Rfu     Rfu 
+FIG 0/27                    - 
+FIG 0/28                    - 
+FIG 0/29                    - 
+FIG 0/30                    - 
+FIG 0/31                    -
+*/

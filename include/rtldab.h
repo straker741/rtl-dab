@@ -28,8 +28,8 @@ david.may.muc@googlemail.com
 #include <unistd.h>
 #include <semaphore.h>
 #include <pthread.h>
-#include "rtl-sdr.h"
-
+#include "rtl-sdr.h"                                                                              
+#include <mysql/mysql.h>    
 
 #include "dab_demod.h"
 #include "dab_fic_parser.h"

@@ -5,15 +5,14 @@
 
 #include "dab_helper_functions.h"
 #include "dab_analyzer.h"
+
 typedef struct{
-  
   uint8_t locked;
   struct ServiceList *sl;
   struct BasicSubchannelOrganization *sco;
   struct ProgrammeServiceLabel *psl;
   struct EnsembleLabel *esl;
-  
-
+  struct DateTime *dt;
 }Ensemble;
 
 struct ServiceComponents{
@@ -29,7 +28,6 @@ struct ServiceComponents{
 };
 
 struct ServiceList {
-
   uint32_t SId;
   uint8_t ECC;
   uint8_t CountryId;
@@ -66,12 +64,20 @@ struct ProgrammeServiceLabel {
 };
 
 struct EnsembleLabel {
-  uint8_t charset;
-  uint8_t OE;
-  uint8_t extension;
-  uint16_t EId;
-  uint8_t label[17];
-  uint16_t chFlag;
+  uint8_t charset;        //this 4-bit field shall identify a character set to qualify the character information contained in the FIG type 1 field. The interpretation of this field shall be as defined in ETSI TS 101 756
+  uint8_t OE;             //this 1-bit flag shall indicate, according to the Extension, whether the information is related to this or another ensemble
+  uint8_t extension;      //this 5-bit field, expressed as an unsigned binary number, identifies one of 32 interpretations of the FIG type 0 field. Those extensions, which are not defined, are reserved for future use.
+  uint16_t EId;           //this field is defined individually for each extension of the FIG type 1 field
+  uint8_t label[17];      //this 16-byte field shall define the label. It shall be coded as a string of up to 16 characters, which are chosen from the character set signalled by the Charset field in the first byte of the FIG type 1 data field.
+                          //The characters are coded from byte 15 to byte 0. The first character starts at byte 15. Bytes at the end of the character field that are not required to carry the label shall be filled with 0x00.
+  uint16_t chFlag;        //Character flag field: this 16-bit flag field shall indicate which of the characters of the character field are to be displayed in an abbreviated form of the label
+};
+
+struct DateTime {
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
+    uint16_t miliseconds;
 };
 
 uint8_t dab_fic_parser(uint8_t fibs[12][256],Ensemble * ens,Analyzer *ana);
